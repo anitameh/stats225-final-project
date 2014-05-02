@@ -71,10 +71,10 @@ shape_data = shape[-na.omit(all_ind_to_remove),]
 #data = read.csv(paste(wd, "/data/absolute-relative-mobility-county.csv", sep=""))
 
 # read in long-lat data
-alldata = read.csv(paste(wd, "/data/alldata.csv", sep=""))
-rel_mobility = na.omit(alldata$relative.mobility)
-abs_mobility = na.omit(alldata$absolute.mobility)
-sample_size = alldata$sample.size
+alldata = read.csv(paste(wd, "data/complete_data.csv", sep=""))
+rel_mobility = na.omit(alldata$relative)
+abs_mobility = na.omit(alldata$absolute)
+sample_size = as.numeric(alldata$sample.size)
 
 ## STEP 2: STANDARDIZE THE MOBILITY DATA
 
@@ -106,9 +106,20 @@ USA_proj = spTransform(shape_data, CRS(proj))
 # plot data
 # plot(USA_proj)
 
+# plot relative mobility withOUT standardization, just for comparison
+num_color = 10
+plot_colors = brewer.pal(num_color,"YlOrRd")
+
+class = classIntervals(rel_mobility, num_color, style="quantile")
+colcode = findColours(class, plot_colors)
+
+png( "relative_mobility.png", width = 5000, height = 4500 )
+plot(USA_proj, col=colcode, border="grey", lwd=0.75)
+legend(-78, 33, legend=names(attr(colcode, "table")), 
+       fill=attr(colcode, "palette"), cex=5, bty="n")
+dev.off()
+
 # plot standardized relative mobility
-num_color = 6
-plot_colors = brewer.pal(num_color,"YlGn")
 class = classIntervals(rel_mobility_std, num_color, style="quantile")
 colcode = findColours(class, plot_colors)
 
@@ -118,9 +129,20 @@ legend(-78, 33, legend=names(attr(colcode, "table")),
        fill=attr(colcode, "palette"), cex=5, bty="n")
 dev.off()
 
+# plot absolute mobility withOUT standardization, for comparison 
+num_color = 10
+plot_colors = rev(brewer.pal(num_color,"YlOrRd"))
+
+class_abs = classIntervals(abs_mobility, num_color, style="quantile")
+colcode_abs = findColours(class_abs, plot_colors)
+
+png( "absolute_mobility.png", width = 5000, height = 4500 )
+plot(USA_proj, col=colcode_abs, border="grey", lwd=0.75)
+legend(-75, 35, legend=names(attr(colcode_abs, "table")), 
+       fill=attr(colcode_abs, "palette"), cex=5, bty="n")
+dev.off()
+
 # plot standardized absolute mobility
-num_color = 6
-plot_colors = brewer.pal(num_color,"YlGn")
 class_abs = classIntervals(abs_mobility_std, num_color, style="quantile")
 colcode_abs = findColours(class_abs, plot_colors)
 
