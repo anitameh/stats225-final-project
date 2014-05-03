@@ -72,15 +72,17 @@ shape_data = shape[-na.omit(all_ind_to_remove),]
 
 # read in long-lat data
 alldata = read.csv(paste(wd, "data/complete_data.csv", sep=""))
-rel_mobility = na.omit(alldata$relative)
-abs_mobility = na.omit(alldata$absolute)
+vizdata = read.csv(paste(wd, "data/viz_all_data.csv", sep=""))
+#rel_mobility = na.omit(alldata$relative)
+#abs_mobility = na.omit(alldata$absolute)
+abs_mobility = vizdata$absolute
 sample_size = as.numeric(alldata$sample.size)
 
 ## STEP 2: STANDARDIZE THE MOBILITY DATA
 
 # first, demean
-rel_mean = mean(na.omit(rel_mobility))
-demean_rel_mobility = rel_mobility - rel_mean
+#rel_mean = mean(na.omit(rel_mobility))
+#demean_rel_mobility = rel_mobility - rel_mean
 
 abs_mean = mean(na.omit(abs_mobility))
 demean_abs_mobility = abs_mobility - abs_mean
@@ -88,11 +90,11 @@ demean_abs_mobility = abs_mobility - abs_mean
 # now, multiply each mobility metric by the sqrt(sample size)
 #     (Here, sample size = number of children in that county 
 #     from the 1980-82 birth cohort.)
-N = length(demean_rel_mobility)
-rel_mobility_std = rep(0, N)
+N = length(abs_mobility)
+#rel_mobility_std = rep(0, N)
 abs_mobility_std = rep(0, N)
 for (i in seq(1,N)) {
-  rel_mobility_std[i] = demean_rel_mobility[i]*sqrt(sample_size[i])
+#  rel_mobility_std[i] = demean_rel_mobility[i]*sqrt(sample_size[i])
   abs_mobility_std[i] = demean_abs_mobility[i]*sqrt(sample_size[i])
 }
 
@@ -107,36 +109,37 @@ USA_proj = spTransform(shape_data, CRS(proj))
 # plot(USA_proj)
 
 # plot relative mobility withOUT standardization, just for comparison
-num_color = 10
-plot_colors = brewer.pal(num_color,"YlOrRd")
+#num_color = 9
+#plot_colors = brewer.pal(num_color,"YlOrRd")
 
-class = classIntervals(rel_mobility, num_color, style="quantile")
-colcode = findColours(class, plot_colors)
+#class = classIntervals(rel_mobility, num_color, style="quantile")
+#colcode = findColours(class, plot_colors)
 
-png( "relative_mobility.png", width = 5000, height = 4500 )
-plot(USA_proj, col=colcode, border="grey", lwd=0.75)
-legend(-78, 33, legend=names(attr(colcode, "table")), 
-       fill=attr(colcode, "palette"), cex=5, bty="n")
-dev.off()
+#png( "relative_mobility.png", width = 5000, height = 4500 )
+#plot(USA_proj, col=colcode, border="grey", lwd=0.75)
+#legend(-78, 33, legend=names(attr(colcode, "table")), 
+#       fill=attr(colcode, "palette"), cex=5, bty="n")
+#dev.off()
 
 # plot standardized relative mobility
-class = classIntervals(rel_mobility_std, num_color, style="quantile")
-colcode = findColours(class, plot_colors)
+#class = classIntervals(rel_mobility_std, num_color, style="quantile")
+#colcode = findColours(class, plot_colors)
 
-png( "relative_mobility_std.png", width = 5000, height = 4500 )
-plot(USA_proj, col=colcode, border="grey", lwd=0.75)
-legend(-78, 33, legend=names(attr(colcode, "table")), 
-       fill=attr(colcode, "palette"), cex=5, bty="n")
-dev.off()
+#png( "relative_mobility_std.png", width = 5000, height = 4500 )
+#plot(USA_proj, col=colcode, border="grey", lwd=0.75)
+#legend(-78, 33, legend=names(attr(colcode, "table")), 
+#       fill=attr(colcode, "palette"), cex=5, bty="n")
+#dev.off()
 
 # plot absolute mobility withOUT standardization, for comparison 
-num_color = 10
+num_color = 9
 plot_colors = rev(brewer.pal(num_color,"YlOrRd"))
 
 class_abs = classIntervals(abs_mobility, num_color, style="quantile")
 colcode_abs = findColours(class_abs, plot_colors)
 
 png( "absolute_mobility.png", width = 5000, height = 4500 )
+#png( "absolute_mobility_vizdata.png", width = 5000, height = 4500 )
 plot(USA_proj, col=colcode_abs, border="grey", lwd=0.75)
 legend(-75, 35, legend=names(attr(colcode_abs, "table")), 
        fill=attr(colcode_abs, "palette"), cex=5, bty="n")
@@ -146,7 +149,7 @@ dev.off()
 class_abs = classIntervals(abs_mobility_std, num_color, style="quantile")
 colcode_abs = findColours(class_abs, plot_colors)
 
-png( "absolute_mobility_std.png", width = 5000, height = 4500 )
+png( "absolute_mobility_std_vizdata.png", width = 5000, height = 4500 )
 plot(USA_proj, col=colcode_abs, border="grey", lwd=0.75)
 legend(-75, 35, legend=names(attr(colcode_abs, "table")), 
        fill=attr(colcode_abs, "palette"), cex=5, bty="n")
@@ -155,44 +158,55 @@ dev.off()
 ## STEP 4: CHECK FOR NONSTATIONARITY
 
 # jitter coordinates
-LONG = alldata$long
-LAT = alldata$lat
+LONG = vizdata$long
+LAT = vizdata$lat
 coords = cbind(LONG, LAT)
 jittered_coords = jitterDupCoords(coords, max=0.01)
 
 # create geodata
-rel_newdata = cbind(rel_mobility_std, jittered_coords)
-my_rel_geodata = as.geodata(rel_newdata, coords.col = 2:3, data.col = 1)
+#rel_newdata = cbind(rel_mobility_std, jittered_coords)
+#my_rel_geodata = as.geodata(rel_newdata, coords.col = 2:3, data.col = 1)
 
 abs_newdata = cbind(abs_mobility_std, jittered_coords)
 my_abs_geodata = as.geodata(abs_newdata, coords.col = 2:3, data.col = 1)
 
 # plot variog cloud using robust estimator
 # Step 4a. relative mobility
+'''
 my_rel_variog = variog(my_rel_geodata, option="cloud", estimator.type="modulus")
-plot(my_rel_variog, 
+plot(my_rel_variog
      main = "Cressie estimator for Relative Mobility, Distance Unrestricted")
 
 my_rel_variog = variog(my_rel_geodata, option="cloud", 
                        max.dist=20, estimator.type="modulus")
 plot(my_rel_variog, 
      main = "Cressie estimator for Relative Mobility")
-
+'''
 # Step 4b. absolute mobility
+
 my_abs_variog = variog(my_abs_geodata, option="cloud", estimator.type="modulus")
-plot(my_abs_variog, 
-     main = "Cressie estimator for Absolute Mobility, Distance Unrestricted")
+png( "absolute_mobility_cloud_unrestricted.png", width = 5000, height = 4500 )
+plot(my_abs_variog$u, my_abs_variog$v, pch=10,
+     col=rgb(red=0, green=0, blue=255, alpha=255, max=255),
+     xlab="Distance", ylab="Semivariance",
+     main = "Cressie estimator, Distance Unrestricted")
+dev.off()
 
 my_abs_variog = variog(my_abs_geodata, option="cloud", 
                        max.dist=20, estimator.type="modulus")
-plot(my_abs_variog, main = "Cressie estimator for Absolute Mobility")
-
+png( "absolute_mobility_cloud_restricted.png", width = 5000, height = 4500 )
+plot(my_abs_variog$u, my_abs_variog$v, pch=10,
+     col=rgb(red=0, green=0, blue=255, alpha=255, max=255),
+     xlab="Distance", ylab="Semivariance",
+     main = "Cressie estimator, Max Dist = 20")
+dev.off()
 
 ## STEP 5: FIT VARIOGRAM
 
 # Step 5A. relative mobility 
 
 # study binning
+'''
 my_rel_variog = variog(my_rel_geodata, breaks=seq(0,50, length=20), estimator.type="modulus")
 plot(my_rel_variog$uvec[1:length(my_rel_variog$uvec)], 
      cumsum(my_rel_variog$n)/sum(my_rel_variog$n), 
@@ -278,7 +292,7 @@ print("Circular")
 circ = variofit(my_rel_variog, c(init_sill, init_range), cov.model="circular", weights="cressie")
 lines(circ, col="black")
 print(circ)
-
+'''
 # Step 2B. absolute mobility
 
 # study binning
@@ -292,104 +306,124 @@ plot(my_abs_variog$uvec[1:length(my_abs_variog$uvec)],
 my_abs_variog = variog(my_abs_geodata, estimator.type="modulus")
 abs_dist = my_abs_variog$u
 abs_semivar = my_abs_variog$v
-plot(abs_dist, abs_semivar, 
-     main="Absolute Mobility Variogram Fit, Distance Unrestricted", 
+plot(abs_dist, abs_semivar, col=rgb(red=0, green=0, blue=255, alpha=100, max=255), 
+     pch=16, cex=2.5,
+     main="Empirical Variogram, Distance Unrestricted", 
      xlab="distance", ylab="semivariance")
 
 # now, fit several variograms
-init_sill = 70000
-init_range = 60
+init_sill = 30000
+init_range = 100
 
 print("Spherical")
-spherical = variofit(my_abs_variog, c(init_sill, init_range), cov.model="spherical", weights="cressie")
-lines(spherical, col="red")
+spherical = variofit(my_abs_variog, c(init_sill, init_range), 
+                     cov.model="spherical", weights="cressie")
+lines(spherical, col="red", lwd=2)
 print(spherical)
 
 print("Squared Exponential")
-sq_exp = variofit(my_abs_variog, c(init_sill, init_range), cov.model="gaussian", weights="cressie")
-lines(sq_exp, col="green")
+sq_exp = variofit(my_abs_variog, c(init_sill, init_range), 
+                  cov.model="gaussian", weights="cressie")
+lines(sq_exp, col="green", lwd=2)
 print(sq_exp)
 
 print("Wave")
-wave = variofit(my_abs_variog, c(init_sill, init_range), cov.model="wave", weights="cressie")
-lines(wave, col="blue")
+wave = variofit(my_abs_variog, c(init_sill, init_range), 
+                cov.model="wave", weights="cressie")
+lines(wave, col="black", lwd=2)
 print(wave)
 
 print("Exponential")
-exp = variofit(my_abs_variog, c(init_sill, init_range), cov.model="exponential", weights="cressie")
+exp = variofit(my_abs_variog, c(init_sill, init_range), 
+               cov.model="exponential", weights="cressie")
 lines(exp, col="orange")
 print(exp)
 
 print("Cubic")
-cubic = variofit(my_abs_variog, c(init_sill, init_range), cov.model="cubic", weights="cressie")
+cubic = variofit(my_abs_variog, c(init_sill, init_range), 
+                 cov.model="cubic", weights="cressie")
 lines(cubic, col="yellow")
 print(cubic)
 
 print("Circular")
-circ = variofit(my_abs_variog, c(init_sill, init_range), cov.model="circular", weights="cressie")
-lines(circ, col="black")
+circ = variofit(my_abs_variog, c(init_sill, init_range), 
+                cov.model="circular", weights="cressie")
+lines(circ, col="purple")
 print(circ)
+
+legend(x=70, y=14000, fill=c("red", "green", "black", "orange", "yellow", "purple"), 
+       legend=c("spherical", "sq exp", "wave", "exp", "cubic", "circular"))
 
 # variog with restricted data
 my_abs_variog = variog(my_abs_geodata, max.dist=20, estimator.type="modulus")
 abs_dist = my_abs_variog$u
 abs_semivar = my_abs_variog$v
-plot(abs_dist, abs_semivar, main="Absolute Mobility Variogram Fit", 
+plot(abs_dist, abs_semivar, col=rgb(red=0, green=0, blue=255, alpha=100, max=255), 
+     pch=16, cex=2.5,
+     main="Empirical Variogram, Max Dist = 20 deg", 
      xlab="distance", ylab="semivariance")
 
 # now, fit several variograms
-init_sill = 70500
+init_sill = 30000
 init_range = 20
 
 print("Spherical")
-spherical = variofit(my_abs_variog, c(init_sill, init_range), cov.model="spherical", weights="cressie")
-lines(spherical, col="red")
+spherical = variofit(my_abs_variog, c(init_sill, init_range), 
+                     cov.model="spherical", weights="cressie")
+lines(spherical, col="red", lwd=2)
 print(spherical)
 
 print("Squared Exponential")
-sq_exp = variofit(my_abs_variog, c(init_sill, init_range), cov.model="gaussian", weights="cressie")
-lines(sq_exp, col="green")
+sq_exp = variofit(my_abs_variog, c(init_sill, init_range), 
+                  cov.model="gaussian", weights="cressie")
+lines(sq_exp, col="green", lwd=2)
 print(sq_exp)
 
 print("Wave")
-wave = variofit(my_abs_variog, c(init_sill, init_range), cov.model="wave", weights="cressie")
-lines(wave, col="blue")
+wave = variofit(my_abs_variog, c(init_sill, init_range), 
+                cov.model="wave", weights="cressie")
+lines(wave, col="black", lwd=2)
 print(wave)
 
 print("Exponential")
-exp = variofit(my_abs_variog, c(init_sill, init_range), cov.model="exponential", weights="cressie")
-lines(exp, col="orange")
+exp = variofit(my_abs_variog, c(init_sill, init_range), 
+               cov.model="exponential", weights="cressie")
+lines(exp, col="orange", lwd=2)
 print(exp)
 
 print("Cubic")
-cubic = variofit(my_abs_variog, c(init_sill, init_range), cov.model="cubic", weights="cressie")
-lines(cubic, col="yellow")
+cubic = variofit(my_abs_variog, c(init_sill, init_range), 
+                 cov.model="cubic", weights="cressie")
+lines(cubic, col="yellow", lwd=2)
 print(cubic)
 
 print("Circular")
-circ = variofit(my_abs_variog, c(init_sill, init_range), cov.model="circular", weights="cressie")
-lines(circ, col="black")
+circ = variofit(my_abs_variog, c(init_sill, init_range), 
+                cov.model="circular", weights="cressie")
+lines(circ, col="purple", lwd=2)
 print(circ)
+
+legend(x=15, y=18000, fill=c("red", "green", "black", "orange", "yellow", "purple"), 
+       legend=c("spherical", "sq exp", "wave", "exp", "cubic", "circular"))
 
 
 ## STEP 6: ENVELOPE PLOTTING
 
 # Step 6a. relative mobility
-env_spherical = variog.model.env(my_rel_geodata, 
-                                 obj.var=my_rel_variog, model.pars=spherical, nsim=10)
-plot(my_rel_variog, envelope = env_spherical, 
-     main="Relative Mobility Envelope: Emp Variograms, Permutation ") 
+#env_spherical = variog.model.env(my_rel_geodata, 
+#                                 obj.var=my_rel_variog, model.pars=spherical, nsim=10)
+#plot(my_rel_variog, envelope = env_spherical, 
+#     main="Relative Mobility Envelope: Emp Variograms, Permutation ") 
 
 # Step 6b. absolute mobility
-env_circular = variog.model.env(my_abs_geodata, 
-                                obj.var=my_abs_variog, model.pars=circ, nsim=10)
-plot(my_abs_variog, envelope = env_circular, 
-     main="Absolute Mobility Envelope: Emp Variograms, Permutation ") 
+env = variog.model.env(my_abs_geodata, obj.var=my_abs_variog, model.pars=spherical, nsim=10)
+plot(my_abs_variog, envelope = env, 
+     main="Envelope using Spherical Parameters") 
 
 ## STEP 7: FINISH KRIGING
-pred_grid = expand.grid(seq(-130, -65, 1), seq(20, 60, 1))
 
 # Step 7a. relative mobility
+'''
 rel_tau2 = 4.2462
 rel_sigma2 = 2986.3702
 rel_phi = 14498.1044
@@ -404,19 +438,33 @@ image(rel_krige_pred, pred_grid, main="Relative Mobility Ordinary Kriging")
 plot(USA_proj, border="dark grey", add=TRUE)
 contour(rel_krige_pred, pred_grid, add=TRUE)
 legend.krige(x.leg=c(-85, -70), y.leg=c(54, 58), rel_krige_pred$predict)
+'''
 
-# Step 7a. absolute mobility
-abs_tau2 = 15985.6409
-abs_sigma2 = 55403.1106
-abs_phi = 18.9535
+# Step 7. absolute mobility
+pred_grid = expand.grid(seq(-127, -65, 1), seq(25, 50, 1))
 
-abs_krige_control = krige.control(type.krige="ok", cov.model="circular", 
+abs_tau2 = 7455.1672
+abs_sigma2 = 32794.5477
+abs_phi = 32.2863
+
+abs_krige_control = krige.control(type.krige="ok", cov.model="spherical", 
                                   cov.pars=c(abs_sigma2, abs_phi), nugget=abs_tau2)
 
-# predict and plot!
+# predict
 abs_krige_pred = krige.conv(my_abs_geodata, locations=pred_grid, krige=abs_krige_control)
 
-image(rel_krige_pred, pred_grid, main="Absolute Mobility Ordinary Kriging")
-plot(USA_proj, border="dark grey", add=TRUE)
-contour(abs_krige_pred, pred_grid, add=TRUE)
-legend.krige(x.leg=c(-85, -70), y.leg=c(54, 58), abs_krige_pred$predict)
+# plot
+image(abs_krige_pred, pred_grid, col=heat.colors(200), 
+      main="Absolute Mobility Ordinary Kriging")
+plot(USA_proj, border=rgb(red=67,blue=70,green=75,max=225), add=TRUE)
+contour(abs_krige_pred, pred_grid, col="white", add=TRUE)
+legend.krige(x.leg=c(-93, -70), y.leg=c(52, 56), abs_krige_pred$predict)
+
+# plot standard errors
+image(abs_krige_pred, val=sqrt(abs_krige_pred$krige.var), col=heat.colors(200), 
+      main="Standard Errors")
+plot(USA_proj, border=rgb(red=67,blue=70,green=75,max=225), add=TRUE)
+contour(abs_krige_pred, pred_grid, col="white", add=TRUE)
+legend.krige(x.leg=c(-93, -70), y.leg=c(52, 56), sqrt(abs_krige_pred$krige.var))
+
+# Step 8. remove state effect
