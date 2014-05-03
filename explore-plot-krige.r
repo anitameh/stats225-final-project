@@ -164,30 +164,14 @@ coords = cbind(LONG, LAT)
 jittered_coords = jitterDupCoords(coords, max=0.01)
 
 # create geodata
-#rel_newdata = cbind(rel_mobility_std, jittered_coords)
-#my_rel_geodata = as.geodata(rel_newdata, coords.col = 2:3, data.col = 1)
-
 abs_newdata = cbind(abs_mobility_std, jittered_coords)
 my_abs_geodata = as.geodata(abs_newdata, coords.col = 2:3, data.col = 1)
 
 # plot variog cloud using robust estimator
-# Step 4a. relative mobility
-'''
-my_rel_variog = variog(my_rel_geodata, option="cloud", estimator.type="modulus")
-plot(my_rel_variog
-     main = "Cressie estimator for Relative Mobility, Distance Unrestricted")
-
-my_rel_variog = variog(my_rel_geodata, option="cloud", 
-                       max.dist=20, estimator.type="modulus")
-plot(my_rel_variog, 
-     main = "Cressie estimator for Relative Mobility")
-'''
-# Step 4b. absolute mobility
-
 my_abs_variog = variog(my_abs_geodata, option="cloud", estimator.type="modulus")
 png( "absolute_mobility_cloud_unrestricted.png", width = 5000, height = 4500 )
 plot(my_abs_variog$u, my_abs_variog$v, pch=10,
-     col=rgb(red=0, green=0, blue=255, alpha=255, max=255),
+     col=rgb(red=0, green=0, blue=255, alpha=50, max=255),
      xlab="Distance", ylab="Semivariance",
      main = "Cressie estimator, Distance Unrestricted")
 dev.off()
@@ -196,104 +180,12 @@ my_abs_variog = variog(my_abs_geodata, option="cloud",
                        max.dist=20, estimator.type="modulus")
 png( "absolute_mobility_cloud_restricted.png", width = 5000, height = 4500 )
 plot(my_abs_variog$u, my_abs_variog$v, pch=10,
-     col=rgb(red=0, green=0, blue=255, alpha=255, max=255),
+     col=rgb(red=0, green=0, blue=255, alpha=50, max=255),
      xlab="Distance", ylab="Semivariance",
      main = "Cressie estimator, Max Dist = 20")
 dev.off()
 
 ## STEP 5: FIT VARIOGRAM
-
-# Step 5A. relative mobility 
-
-# study binning
-'''
-my_rel_variog = variog(my_rel_geodata, breaks=seq(0,50, length=20), estimator.type="modulus")
-plot(my_rel_variog$uvec[1:length(my_rel_variog$uvec)], 
-     cumsum(my_rel_variog$n)/sum(my_rel_variog$n), 
-     main="Percent of Data Captured Within a Bin", xlab="Bins (degree)", ylab="Amount of Data (%)")
-
-# variog with unrestricted data
-my_rel_variog = variog(my_rel_geodata, estimator.type="modulus")
-rel_dist = my_rel_variog$u
-rel_semivar = my_rel_variog$v
-plot(rel_dist, rel_semivar, 
-     main="Relative Mobility Variogram Fit, Distance Unrestricted", xlab="distance", ylab="semivariance")
-
-# now, fit several variograms
-init_sill = 30
-init_range = 60
-
-print("Spherical")
-spherical = variofit(my_rel_variog, c(init_sill, init_range), cov.model="spherical", weights="cressie")
-lines(spherical, col="red")
-print(spherical)
-
-print("Squared Exponential")
-sq_exp = variofit(my_rel_variog, c(init_sill, init_range), cov.model="gaussian", weights="cressie")
-lines(sq_exp, col="green")
-print(sq_exp)
-
-print("Wave")
-wave = variofit(my_rel_variog, c(init_sill, init_range), cov.model="wave", weights="cressie")
-lines(wave, col="blue")
-print(wave)
-
-print("Exponential")
-exp = variofit(my_rel_variog, c(init_sill, init_range), cov.model="exponential", weights="cressie")
-lines(exp, col="orange")
-print(exp)
-
-print("Cubic")
-cubic = variofit(my_rel_variog, c(init_sill, init_range), cov.model="cubic", weights="cressie")
-lines(cubic, col="yellow")
-print(cubic)
-
-print("Circular")
-circ = variofit(my_rel_variog, c(init_sill, init_range), cov.model="circular", weights="cressie")
-lines(circ, col="black")
-print(circ)
-
-# rel variog with restricted data
-my_rel_variog = variog(my_rel_geodata, max.dist=20, estimator.type="modulus")
-rel_dist = my_rel_variog$u
-rel_semivar = my_rel_variog$v
-plot(rel_dist, rel_semivar, main="Relative Mobility Variogram Fit", xlab="distance", ylab="semivariance")
-
-# now, fit several variograms
-init_sill = 11
-init_range = 20
-
-print("Spherical")
-spherical = variofit(my_rel_variog, c(init_sill, init_range), cov.model="spherical", weights="cressie")
-lines(spherical, col="red")
-print(spherical)
-
-print("Squared Exponential")
-sq_exp = variofit(my_rel_variog, c(init_sill, init_range), cov.model="gaussian", weights="cressie")
-lines(sq_exp, col="green")
-print(sq_exp)
-
-print("Wave")
-wave = variofit(my_rel_variog, c(init_sill, init_range), cov.model="wave", weights="cressie")
-lines(wave, col="blue")
-print(wave)
-
-print("Exponential")
-exp = variofit(my_rel_variog, c(init_sill, init_range), cov.model="exponential", weights="cressie")
-lines(exp, col="orange")
-print(exp)
-
-print("Cubic")
-cubic = variofit(my_rel_variog, c(init_sill, init_range), cov.model="cubic", weights="cressie")
-lines(cubic, col="yellow")
-print(cubic)
-
-print("Circular")
-circ = variofit(my_rel_variog, c(init_sill, init_range), cov.model="circular", weights="cressie")
-lines(circ, col="black")
-print(circ)
-'''
-# Step 2B. absolute mobility
 
 # study binning
 my_abs_variog = variog(my_abs_geodata, breaks=seq(0,50, length=20), estimator.type="modulus")
@@ -409,38 +301,12 @@ legend(x=15, y=18000, fill=c("red", "green", "black", "orange", "yellow", "purpl
 
 ## STEP 6: ENVELOPE PLOTTING
 
-# Step 6a. relative mobility
-#env_spherical = variog.model.env(my_rel_geodata, 
-#                                 obj.var=my_rel_variog, model.pars=spherical, nsim=10)
-#plot(my_rel_variog, envelope = env_spherical, 
-#     main="Relative Mobility Envelope: Emp Variograms, Permutation ") 
-
-# Step 6b. absolute mobility
 env = variog.model.env(my_abs_geodata, obj.var=my_abs_variog, model.pars=spherical, nsim=10)
 plot(my_abs_variog, envelope = env, 
      main="Envelope using Spherical Parameters") 
 
 ## STEP 7: FINISH KRIGING
 
-# Step 7a. relative mobility
-'''
-rel_tau2 = 4.2462
-rel_sigma2 = 2986.3702
-rel_phi = 14498.1044
-
-rel_krige_control = krige.control(type.krige="ok", cov.model="spherical", 
-                                  cov.pars=c(rel_sigma2, rel_phi), nugget=rel_tau2)
-
-# predict and plot!
-rel_krige_pred = krige.conv(my_rel_geodata, locations=pred_grid, krige=rel_krige_control)
-
-image(rel_krige_pred, pred_grid, main="Relative Mobility Ordinary Kriging")
-plot(USA_proj, border="dark grey", add=TRUE)
-contour(rel_krige_pred, pred_grid, add=TRUE)
-legend.krige(x.leg=c(-85, -70), y.leg=c(54, 58), rel_krige_pred$predict)
-'''
-
-# Step 7. absolute mobility
 pred_grid = expand.grid(seq(-127, -65, 1), seq(25, 50, 1))
 
 abs_tau2 = 7455.1672
